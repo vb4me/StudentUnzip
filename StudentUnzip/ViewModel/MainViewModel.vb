@@ -133,12 +133,19 @@ Public Class MainViewModel
                 Dim fullPath = IO.Path.Combine(Me.DestinationPath, entry.FullName)
                 If Not String.IsNullOrEmpty(entry.Name) Then
                     WriteStatusLine(entry.FullName)
-                    IO.Directory.CreateDirectory(IO.Path.Combine(Me.DestinationPath, entry.FullName.Substring(0, entry.FullName.Length - entry.Name.Length)))
-                    entry.ExtractToFile(fullPath)
+                    Dim newPath = IO.Path.Combine(Me.DestinationPath, entry.FullName.Substring(0, entry.FullName.Length - entry.Name.Length))
+                    IO.Directory.CreateDirectory(newPath)
+                    If entry.Name.EndsWith("zip", StringComparison.CurrentCultureIgnoreCase) Then
+                        fullPath &= ".temp"
+                        entry.ExtractToFile(fullPath)
+                        ZipFile.ExtractToDirectory(fullPath, newPath)
+                        IO.File.Delete(fullPath)
+                    Else
+                        entry.ExtractToFile(fullPath)
+                    End If
                 End If
             Next
         End Using
-
     End Sub
 
 
