@@ -30,7 +30,10 @@ Public Class MainViewModel
             Return _destinationPath
         End Get
         Set(ByVal value As String)
-            _destinationPath = value
+            If Not value = _destinationPath Then
+                _destinationPath = value
+                RaisePropertyChanged(Function() Me.DestinationPath)
+            End If
         End Set
     End Property
 
@@ -40,7 +43,10 @@ Public Class MainViewModel
             Return _statusLog
         End Get
         Set(ByVal value As String)
-            _statusLog = value
+            If Not value = _statusLog Then
+                _statusLog = value
+                RaisePropertyChanged(Function() Me.StatusLog)
+            End If
         End Set
     End Property
 
@@ -55,7 +61,7 @@ Public Class MainViewModel
     End Property
 
     Private Sub Go()
-        SourceFile = SourceFile & "."
+        SourceFile &= "."
     End Sub
 
 
