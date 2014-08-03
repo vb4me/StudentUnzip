@@ -1,6 +1,7 @@
 ﻿<Window x:Class="MainWindow"
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        DataContext="{Binding Source={StaticResource Locator}, Path=Main}"
     Title="MainWindow" Height="350" Width="525">
     <Window.Resources>
         <Style TargetType="TextBox">
@@ -20,9 +21,9 @@
             <RowDefinition Height="auto"/>
             <RowDefinition Height="*"/>
         </Grid.RowDefinitions>
-        <Button Grid.Row="0" Grid.Column="0" Grid.RowSpan="2" Width="100" Content="Go"/>
-        <TextBlock Grid.Row="0" Grid.Column="1" Text="Source..."></TextBlock>
-        <TextBlock Grid.Row="1" Grid.Column="1" Text="Destination..."></TextBlock>
-        <TextBox Grid.Row="2" Grid.Column="0" Grid.ColumnSpan="2" Text="Status..."></TextBox>
+        <Button Grid.Row="0" Grid.Column="0" Grid.RowSpan="2" Width="100" Content="Go" Command="{Binding GoCommand}"/>
+        <TextBlock Grid.Row="0" Grid.Column="1" Text="{Binding SourceFile}"></TextBlock>
+        <TextBlock Grid.Row="1" Grid.Column="1" Text="{Binding DestinationPath}"></TextBlock>
+        <TextBox Grid.Row="2" Grid.Column="0" Grid.ColumnSpan="2" Text="{Binding StatusLog}"></TextBox>
     </Grid>
 </Window>
