@@ -63,11 +63,28 @@ Public Class MainViewModel
     Private Sub Go()
         Dim gotSourceFile = GetSourceFile()
         Dim gotDestinationFolder = GetDestinationFolder()
+        Dim isDestinationEmpty As Boolean = True
+
         If Not gotSourceFile Then
             WriteStatusLine("You did not select a source file.")
         End If
-        If Not gotDestinationFolder Then
+
+        If gotDestinationFolder Then
+            Dim hasFiles = System.IO.Directory.GetFiles(Me.DestinationPath).Any()
+            Dim hasFolders = System.IO.Directory.GetDirectories(Me.DestinationPath).Any()
+
+            If hasFiles Or hasFolders Then
+                WriteStatusLine("Destination not empty.  Please try again.")
+                isDestinationEmpty = False
+            End If
+        Else
             WriteStatusLine("You did not select a destination folder.")
+
+        End If
+
+        If gotDestinationFolder And gotSourceFile And isDestinationEmpty Then
+            Decompress()
+
         End If
     End Sub
 
@@ -108,6 +125,10 @@ Public Class MainViewModel
         End If
         Return False
     End Function
+
+    Private Sub Decompress()
+        Throw New NotImplementedException
+    End Sub
 
 
 End Class
