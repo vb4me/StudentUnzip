@@ -61,8 +61,53 @@ Public Class MainViewModel
     End Property
 
     Private Sub Go()
-        SourceFile &= "."
+        Dim gotSourceFile = GetSourceFile()
+        Dim gotDestinationFolder = GetDestinationFolder()
+        If Not gotSourceFile Then
+            WriteStatusLine("You did not select a source file.")
+        End If
+        If Not gotDestinationFolder Then
+            WriteStatusLine("You did not select a destination folder.")
+        End If
     End Sub
+
+    Private Sub WriteStatusLine(line As String)
+        Me.StatusLog = line & Environment.NewLine & Me.StatusLog
+    End Sub
+    Private Function GetSourceFile() As Boolean
+        ' Configure open file dialog box 
+        Dim dlg As New Microsoft.Win32.OpenFileDialog()
+        dlg.FileName = "bulk_download.zip" ' Default file name
+        dlg.DefaultExt = ".zip" ' Default file extension
+        dlg.Filter = "Zip files (.zip)|*.zip" ' Filter files by extension
+
+        ' Show open file dialog box 
+        Dim result? As Boolean = dlg.ShowDialog()
+
+        ' Process open file dialog box results 
+        If result = True Then
+            ' Open document 
+            Me.SourceFile = dlg.FileName
+            Return True
+        End If
+        Return False
+    End Function
+
+    Private Function GetDestinationFolder() As Boolean
+        ' Configure open file dialog box 
+        Dim dlg As New System.Windows.Forms.FolderBrowserDialog()
+
+        ' Show open file dialog box 
+        Dim result = dlg.ShowDialog()
+
+        ' Process open file dialog box results 
+        If result = System.Windows.Forms.DialogResult.OK Then
+            ' Open document 
+            Me.DestinationPath = dlg.SelectedPath
+            Return True
+        End If
+        Return False
+    End Function
 
 
 End Class
