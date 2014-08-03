@@ -1,5 +1,6 @@
 ﻿Imports GalaSoft.MvvmLight
 Imports GalaSoft.MvvmLight.Command
+Imports System.IO.Compression
 
 Public Class MainViewModel
     Inherits ViewModelBase
@@ -70,8 +71,8 @@ Public Class MainViewModel
         End If
 
         If gotDestinationFolder Then
-            Dim hasFiles = System.IO.Directory.GetFiles(Me.DestinationPath).Any()
-            Dim hasFolders = System.IO.Directory.GetDirectories(Me.DestinationPath).Any()
+            Dim hasFiles = IO.Directory.GetFiles(Me.DestinationPath).Any()
+            Dim hasFolders = IO.Directory.GetDirectories(Me.DestinationPath).Any()
 
             If hasFiles Or hasFolders Then
                 WriteStatusLine("Destination not empty.  Please try again.")
@@ -127,7 +128,17 @@ Public Class MainViewModel
     End Function
 
     Private Sub Decompress()
-        Throw New NotImplementedException
+        Using archive As ZipArchive = IO.Compression.ZipFile.OpenRead(Me.SourceFile)
+            For Each entry As ZipArchiveEntry In archive.Entries
+                Dim fullPath = IO.Path.Combine(Me.DestinationPath, entry.FullName)
+                If Not String.IsNullOrEmpty(entry.Name) Then
+                    WriteStatusLine(entry.FullName)
+                    IO.Directory.CreateDirectory(IO.Path.Combine(Me.DestinationPath, entry.FullName.Substring(0, entry.FullName.Length - entry.Name.Length)))
+                    entry.ExtractToFile(fullPath)
+                End If
+            Next
+        End Using
+
     End Sub
 
 
