@@ -10,7 +10,27 @@ Public Class MainViewModel
         _destinationPath = "Destination path..."
         _statusLog = "Status log..."
         _goCommand = New RelayCommand(Sub() Go())
+
+        If System.Deployment.Application.ApplicationDeployment.IsNetworkDeployed Then
+            Dim dep = System.Deployment.Application.ApplicationDeployment.CurrentDeployment
+            _windowTitle = String.Format("Student Unzip - {0}", dep.CurrentVersion)
+        Else
+            _windowTitle = "Student Unzip Local!"
+        End If
     End Sub
+
+    Private _windowTitle As String
+    Public Property WindowTitle() As String
+        Get
+            Return _windowTitle
+        End Get
+        Set(ByVal value As String)
+            If Not value = _windowTitle Then
+                _windowTitle = value
+                RaisePropertyChanged(Function() Me.WindowTitle)
+            End If
+        End Set
+    End Property
 
     Private _sourceFile As String
     Public Property SourceFile() As String
