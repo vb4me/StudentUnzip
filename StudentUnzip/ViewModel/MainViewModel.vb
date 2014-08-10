@@ -1,6 +1,7 @@
 ﻿Imports GalaSoft.MvvmLight
 Imports GalaSoft.MvvmLight.Command
 Imports System.IO.Compression
+Imports GalaSoft.MvvmLight.Threading
 
 Public Class MainViewModel
     Inherits ViewModelBase
@@ -110,7 +111,9 @@ Public Class MainViewModel
     End Sub
 
     Private Sub WriteStatusLine(line As String)
-        Me.StatusLog = line & Environment.NewLine & Me.StatusLog
+        DispatcherHelper.CheckBeginInvokeOnUI(Sub()
+                                                  Me.StatusLog = line & Environment.NewLine & Me.StatusLog
+                                              End Sub)
     End Sub
     Private Function GetSourceFile() As Boolean
         ' Configure open file dialog box 
@@ -148,6 +151,7 @@ Public Class MainViewModel
     End Function
 
     Private Sub Decompress()
+        Dim tasks = New List(Of Task)
         Using archive As ZipArchive = IO.Compression.ZipFile.OpenRead(Me.SourceFile)
             For Each entry As ZipArchiveEntry In archive.Entries
                 Dim fullPath = IO.Path.Combine(Me.DestinationPath, entry.FullName)
@@ -158,14 +162,20 @@ Public Class MainViewModel
                     If entry.Name.EndsWith("zip", StringComparison.CurrentCultureIgnoreCase) Then
                         fullPath &= ".temp"
                         entry.ExtractToFile(fullPath)
-                        ZipFile.ExtractToDirectory(fullPath, newPath)
-                        IO.File.Delete(fullPath)
+                        tasks.Add(Task.Factory.StartNew(Sub()
+                                                            System.Threading.Thread.Sleep(5000)
+                                                            ZipFile.ExtractToDirectory(fullPath, newPath)
+                                                            IO.File.Delete(fullPath)
+                                                            WriteStatusLine(newPath)
+                                                        End Sub))
                     Else
                         entry.ExtractToFile(fullPath)
                     End If
                 End If
             Next
         End Using
+        Task.WaitAll(tasks.ToArray())
+        WriteStatusLine("All Done!")
     End Sub
 
 
