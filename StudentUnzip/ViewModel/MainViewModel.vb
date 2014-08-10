@@ -82,10 +82,12 @@ Public Class MainViewModel
         End Set
     End Property
 
-    Private Sub Go()
+    Private Async Sub Go()
         Dim gotSourceFile = GetSourceFile()
         Dim gotDestinationFolder = GetDestinationFolder()
         Dim isDestinationEmpty As Boolean = True
+
+        StatusLog = String.Empty
 
         If Not gotSourceFile Then
             WriteStatusLine("You did not select a source file.")
@@ -105,15 +107,15 @@ Public Class MainViewModel
         End If
 
         If gotDestinationFolder And gotSourceFile And isDestinationEmpty Then
-            Decompress()
-
+            Await DecompressAsync()
+            WriteStatusLine("All Done!")
         End If
     End Sub
 
     Private Sub WriteStatusLine(line As String)
-        DispatcherHelper.CheckBeginInvokeOnUI(Sub()
-                                                  Me.StatusLog = line & Environment.NewLine & Me.StatusLog
-                                              End Sub)
+        'DispatcherHelper.CheckBeginInvokeOnUI(Sub()
+        Me.StatusLog = line & Environment.NewLine & Me.StatusLog
+        'End Sub)
     End Sub
     Private Function GetSourceFile() As Boolean
         ' Configure open file dialog box 
@@ -150,8 +152,7 @@ Public Class MainViewModel
         Return False
     End Function
 
-    Private Sub Decompress()
-        Dim tasks = New List(Of Task)
+    Private Async Function DecompressAsync() As Task
         Using archive As ZipArchive = IO.Compression.ZipFile.OpenRead(Me.SourceFile)
             For Each entry As ZipArchiveEntry In archive.Entries
                 Dim fullPath = IO.Path.Combine(Me.DestinationPath, entry.FullName)
@@ -162,21 +163,20 @@ Public Class MainViewModel
                     If entry.Name.EndsWith("zip", StringComparison.CurrentCultureIgnoreCase) Then
                         fullPath &= ".temp"
                         entry.ExtractToFile(fullPath)
-                        tasks.Add(Task.Factory.StartNew(Sub()
-                                                            System.Threading.Thread.Sleep(5000)
-                                                            ZipFile.ExtractToDirectory(fullPath, newPath)
-                                                            IO.File.Delete(fullPath)
-                                                            WriteStatusLine(newPath)
-                                                        End Sub))
+                        Await Task.Factory.StartNew(Sub()
+                                                        'System.Threading.Thread.Sleep(5000)
+                                                        ZipFile.ExtractToDirectory(fullPath, newPath)
+                                                        IO.File.Delete(fullPath)
+                                                        WriteStatusLine(newPath)
+                                                    End Sub)
                     Else
                         entry.ExtractToFile(fullPath)
                     End If
                 End If
             Next
         End Using
-        Task.WaitAll(tasks.ToArray())
-        WriteStatusLine("All Done!")
-    End Sub
+
+    End Function
 
 
 End Class
