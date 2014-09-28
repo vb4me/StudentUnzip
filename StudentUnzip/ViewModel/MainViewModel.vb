@@ -42,8 +42,41 @@ Public Class MainViewModel
             If Not value = _sourceFile Then
                 _sourceFile = value
                 RaisePropertyChanged(Function() Me.SourceFile)
+                Me.PathOrig = IO.Path.GetFileNameWithoutExtension(Me.SourceFile)
             End If
         End Set
+    End Property
+
+    Private _pathAlias As String
+    Public Property PathAlias() As String
+        Get
+            Return _pathAlias
+        End Get
+        Set(ByVal value As String)
+            If Not value = _pathAlias Then
+                _pathAlias = value
+                RaisePropertyChanged(Function() Me.PathAlias)
+            End If
+        End Set
+    End Property
+
+    Private _pathOrig As String
+    Public Property PathOrig() As String
+        Get
+            Return _pathOrig
+        End Get
+        Set(ByVal value As String)
+            If Not value = _pathOrig Then
+                _pathOrig = value
+                RaisePropertyChanged(Function() Me.PathOrig)
+            End If
+        End Set
+    End Property
+
+    Public ReadOnly Property HasPathAlias As Boolean
+        Get
+            Return Not String.IsNullOrWhiteSpace(Me.PathAlias)
+        End Get
     End Property
 
     Private _destinationPath As String
@@ -91,6 +124,8 @@ Public Class MainViewModel
 
         If Not gotSourceFile Then
             WriteStatusLine("You did not select a source file.")
+        ElseIf Me.SourceFile.Length > 25 And Not Me.HasPathAlias Then
+            Me.PathAlias = "MyZip"
         End If
 
         If gotDestinationFolder Then
@@ -109,7 +144,14 @@ Public Class MainViewModel
         If gotDestinationFolder And gotSourceFile And isDestinationEmpty Then
             Await DecompressAsync()
             WriteStatusLine("All Done!")
+
+            If Me.PathAlias = "MyZip" Then
+                WriteStatusLine("The path provided by Sakai was too long.  Look in the MyZip folder.")
+            End If
+            System.Diagnostics.Process.Start(Me.DestinationPath)
         End If
+
+
     End Sub
 
     Private Sub WriteStatusLine(line As String)
@@ -155,10 +197,10 @@ Public Class MainViewModel
     Private Async Function DecompressAsync() As Task
         Using archive As ZipArchive = IO.Compression.ZipFile.OpenRead(Me.SourceFile)
             For Each entry As ZipArchiveEntry In archive.Entries
-                Dim fullPath = IO.Path.Combine(Me.DestinationPath, entry.FullName)
+                Dim fullPath = IO.Path.Combine(Me.DestinationPath, ScrubPath(entry.FullName))
                 If Not String.IsNullOrEmpty(entry.Name) Then
                     WriteStatusLine(entry.FullName)
-                    Dim newPath = IO.Path.Combine(Me.DestinationPath, entry.FullName.Substring(0, entry.FullName.Length - entry.Name.Length))
+                    Dim newPath = IO.Path.Combine(Me.DestinationPath, ScrubPath(entry.FullName.Substring(0, entry.FullName.Length - entry.Name.Length)))
                     IO.Directory.CreateDirectory(newPath)
                     If entry.Name.EndsWith("zip", StringComparison.CurrentCultureIgnoreCase) Then
                         fullPath &= ".temp"
@@ -178,5 +220,12 @@ Public Class MainViewModel
 
     End Function
 
+    Private Function ScrubPath(path As String) As String
+        If Me.HasPathAlias Then
+            Return path.Replace(Me.PathOrig, Me.PathAlias)
+        Else
+            Return path
+        End If
+    End Function
 
 End Class
