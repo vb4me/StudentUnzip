@@ -56,6 +56,7 @@ Public Class MainViewModel
             If Not value = _pathAlias Then
                 _pathAlias = value
                 RaisePropertyChanged(Function() Me.PathAlias)
+                RaisePropertyChanged(Function() Me.HasPathAlias)
             End If
         End Set
     End Property
@@ -118,14 +119,13 @@ Public Class MainViewModel
     Private Async Sub Go()
         Dim gotSourceFile = GetSourceFile()
         Dim gotDestinationFolder = GetDestinationFolder()
-        Dim isDestinationEmpty As Boolean = True
 
         StatusLog = String.Empty
 
         If Not gotSourceFile Then
             WriteStatusLine("You did not select a source file.")
         ElseIf Me.SourceFile.Length > 25 And Not Me.HasPathAlias Then
-            Me.PathAlias = "MyZip"
+            Me.PathAlias = "UnzippedFiles"
         End If
 
         If gotDestinationFolder Then
@@ -133,20 +133,28 @@ Public Class MainViewModel
             Dim hasFolders = IO.Directory.GetDirectories(Me.DestinationPath).Any()
 
             If hasFiles Or hasFolders Then
-                WriteStatusLine("Destination not empty.  Please try again.")
-                isDestinationEmpty = False
+                Dim folderIndex As Integer = 0
+                Dim subFolder As String = "UnzippedFiles"
+                Dim subBaseFolder As String = "UnzippedFiles"
+
+                While IO.Directory.Exists(IO.Path.Combine(Me.DestinationPath, subFolder))
+                    folderIndex += 1
+                    subFolder = String.Format("{0}{1:000}", subBaseFolder, folderIndex)
+                End While
+                Me.DestinationPath = IO.Path.Combine(Me.DestinationPath, subFolder)
+                IO.Directory.CreateDirectory(Me.DestinationPath)
             End If
         Else
             WriteStatusLine("You did not select a destination folder.")
 
         End If
 
-        If gotDestinationFolder And gotSourceFile And isDestinationEmpty Then
+        If gotDestinationFolder And gotSourceFile Then
             Await DecompressAsync()
             WriteStatusLine("All Done!")
 
-            If Me.PathAlias = "MyZip" Then
-                WriteStatusLine("The path provided by Sakai was too long.  Look in the MyZip folder.")
+            If Me.PathAlias = "UnzippedFiles" Then
+                WriteStatusLine("The path provided by Sakai was too long.  Look in the UnzippedFiles folder.")
             End If
             System.Diagnostics.Process.Start(Me.DestinationPath)
         End If
